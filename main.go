@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/aleury/rssagg/internal/database"
 	"github.com/go-chi/chi"
@@ -33,7 +34,9 @@ func main() {
 		log.Fatal("can't connect to database")
 	}
 
-	app := application{DB: database.New(conn)}
+	db := database.New(conn)
+	app := application{DB: db}
+	go startScraping(db, 10, time.Minute)
 
 	router := chi.NewRouter()
 	router.Use(cors.Handler(cors.Options{
@@ -51,6 +54,8 @@ func main() {
 	// users
 	v1Router.Get("/users", app.middlewareAuth(app.handlerGetUser))
 	v1Router.Post("/users", app.handlerCreateUser)
+	// posts
+	v1Router.Get("/posts", app.middlewareAuth(app.handlerGetPostsForUser))
 	// feeds
 	v1Router.Get("/feeds", app.handlerGetFeeds)
 	v1Router.Post("/feeds", app.middlewareAuth(app.handlerCreateFeed))

@@ -39,3 +39,16 @@ func (app *application) handlerCreateUser(w http.ResponseWriter, r *http.Request
 
 	respondWithJSON(w, http.StatusOK, databaseUserToUser(user))
 }
+
+func (app *application) handlerGetPostsForUser(w http.ResponseWriter, r *http.Request, user database.User) {
+	posts, err := app.DB.GetPostsForUser(r.Context(), database.GetPostsForUserParams{
+		UserID: user.ID,
+		Limit:  10,
+	})
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, fmt.Sprintf("couldn't get posts: %s", err))
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, databasePostsToPosts(posts))
+}
